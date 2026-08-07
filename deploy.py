@@ -291,7 +291,6 @@ st.markdown(
     """
     <div style="text-align: center; font-size: 12px; color: gray; line-height: 1.8;">
         <p style="margin: 0; padding: 0;">
-            🍜 <strong>Dashboard Analisis Sentimen Mie Gacoan Depok</strong><br>
             Dikembangkan oleh <strong>Zahwa Annisa Hendajani</strong> © 2026<br>
             <em>Dashboard ini dikembangkan sebagai bagian dari Penulisan Ilmiah dengan judul <br>
             "Analisis Sentimen Ulasan Pelanggan Mie Gacoan Wilayah Depok Berdasarkan Ulasan Google Maps Menggunakan Metode IndoBERT"</em>
