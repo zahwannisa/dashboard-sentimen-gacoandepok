@@ -109,7 +109,8 @@ with col_wc1:
                 width=600, height=350, 
                 background_color='white', 
                 colormap='Greens', 
-                max_words=100
+                max_words=100,
+                random_state=42
             ).generate(teks_pos)
             
             fig_pos, ax_pos = plt.subplots(figsize=(6, 3.5))
@@ -130,7 +131,8 @@ with col_wc2:
                 width=600, height=350, 
                 background_color='white', 
                 colormap='Reds', 
-                max_words=100
+                max_words=100,
+                random_state=42
             ).generate(teks_neg)
             
             fig_neg, ax_neg = plt.subplots(figsize=(6, 3.5))
