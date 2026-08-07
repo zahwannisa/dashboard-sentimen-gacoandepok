@@ -17,12 +17,9 @@ st.set_page_config(page_title="Dashboard Visualisasi Sentimen", page_icon="🍜"
 @st.cache_data
 def load_data():
     df = pd.read_csv("gacoan_depok_prediksi.csv") 
-    
-    # Konversi kolom Tanggal_Ulasan ke format datetime
     df['Tanggal_Ulasan'] = pd.to_datetime(df['Tanggal_Ulasan'])
     return df
 
-# Load data ke dalam memori
 df = load_data()
 
 # ==========================================
@@ -34,13 +31,11 @@ st.write(
 
 st.markdown("---")
 
-# Filter Cabang Utama
 daftar_cabang = ["Semua Cabang"] + list(df['Cabang'].unique())
 st.subheader("🎯 Filter Cabang Mie Gacoan")
 st.caption("Gunakan dropdown di bawah untuk memilih cabang Mie Gacoan yang ingin ditampilkan. Pilih 'Semua Cabang' untuk melihat data secara keseluruhan.")
 pilih_cabang = st.selectbox("Pilih Cabang Mie Gacoan:", daftar_cabang)
 
-# Terapkan filter data berdasarkan pilihan cabang
 if pilih_cabang == "Semua Cabang":
     df_filter = df
 else:
@@ -51,7 +46,6 @@ st.markdown("---")
 # ==========================================
 # 4 & 5. RINGKASAN METRICS & PIE CHART
 # ==========================================
-# Menghitung nilai metrics
 total_ulasan = len(df_filter)
 total_positif = len(df_filter[df_filter['Label_Prediksi'] == 'Positif'])
 total_negatif = len(df_filter[df_filter['Label_Prediksi'] == 'Negatif'])
@@ -107,40 +101,29 @@ st.caption("Line Chart di bawah ini menyajikan analisis rentang waktu (time-seri
 
 if not df_filter.empty and 'Tanggal_Ulasan' in df_filter.columns:
     df_line = df_filter.copy()
-    
-    # 1. Ekstrak Bulan dan Tahun (Format: YYYY-MM) untuk pengelompokan
-    df_line['Bulan_Tahun'] = df_line['Tanggal_Ulasan'].dt.to_period('M')
 
-    # 2. Hitung jumlah tiap label per bulan
+    df_line['Bulan_Tahun'] = df_line['Tanggal_Ulasan'].dt.to_period('M')
     tren_sentimen = df_line.groupby(['Bulan_Tahun', 'Label_Prediksi']).size().unstack(fill_value=0)
 
     for col in ['Positif', 'Negatif']:
         if col not in tren_sentimen.columns:
             tren_sentimen[col] = 0
-
-    # 3. Ubah indeks kembali ke format Timestamp agar matplotlib bisa membaca urutan waktunya
     tren_sentimen.index = tren_sentimen.index.to_timestamp()
 
-    # 4. Mulai Menggambar Grafik Matplotlib
     fig_line, ax = plt.subplots(figsize=(12, 5))
 
-    # Plot Garis Positif (Warna Hijau)
     ax.plot(
         tren_sentimen.index, tren_sentimen['Positif'],
         marker='o', linestyle='-', linewidth=2, color='#2ca02c', label='Positif'
     )
 
-    # Plot Garis Negatif (Warna Merah)
     ax.plot(
         tren_sentimen.index, tren_sentimen['Negatif'],
         marker='s', linestyle='-', linewidth=2, color='#d32f2f', label='Negatif'
     )
 
-    # 5. Kustomisasi Tampilan Grafik
     ax.set_xlabel('Periode Waktu (Bulan)', fontsize=11, labelpad=10)
     ax.set_ylabel('Jumlah Ulasan', fontsize=11, labelpad=10)
-
-    # Format sumbu X agar rapi (Menampilkan Singkatan Bulan dan Tahun)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
     
@@ -152,7 +135,6 @@ if not df_filter.empty and 'Tanggal_Ulasan' in df_filter.columns:
 
     plt.tight_layout()
 
-    # Tampilkan grafik Matplotlib di Streamlit
     st.pyplot(fig_line)
 else:
     st.info("Data tanggal ulasan tidak tersedia.")
@@ -181,7 +163,6 @@ stopwords_tambahan = {'dan', 'yang', 'di', 'ke', 'dari', 'untuk', 'dengan', 'ini
 
 def bersihkan_untuk_wordcloud(teks_panjang):
     words = str(teks_panjang).split()
-    # Hanya simpan kata yang tidak ada di dalam stopwords_tambahan
     words = [w for w in words if w.lower() not in stopwords_tambahan]
     return " ".join(words)
 
@@ -189,10 +170,9 @@ def bersihkan_untuk_wordcloud(teks_panjang):
 with col_wc1:
     st.markdown("#### Sentimen Positif 😃")
     
-    # 1. Ambil teks dan gabungkan
-    teks_pos_mentah = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Positif']['Teks_Bersih'].dropna().astype(str).tolist())
     
-    # 2. Bersihkan kata hubungnya
+    teks_pos_mentah = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Positif']['Teks_Bersih'].dropna().astype(str).tolist())
+
     teks_pos = bersihkan_untuk_wordcloud(teks_pos_mentah)
     
     if teks_pos.strip():
@@ -216,11 +196,9 @@ with col_wc1:
 # --- Wordcloud Negatif ---
 with col_wc2:
     st.markdown("#### Sentimen Negatif 😡")
-    
-    # 1. Ambil teks dan gabungkan
+
     teks_neg_mentah = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Negatif']['Teks_Bersih'].dropna().astype(str).tolist())
-    
-    # 2. Bersihkan kata hubungnya
+
     teks_neg = bersihkan_untuk_wordcloud(teks_neg_mentah)
     
     if teks_neg.strip():
