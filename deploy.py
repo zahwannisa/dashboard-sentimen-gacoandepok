@@ -157,6 +157,8 @@ if not df_filter.empty and 'Tanggal_Ulasan' in df_filter.columns:
 else:
     st.info("Data tanggal ulasan tidak tersedia.")
 
+st.markdown("---")
+
 # ==========================================
 # 7. WORD CLOUD POSITIF & NEGATIF
 # ==========================================
