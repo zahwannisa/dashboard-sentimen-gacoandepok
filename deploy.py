@@ -2,20 +2,20 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from wordcloud import WordCloud
 import random
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN UTAMA
 # ==========================================
-st.set_page_config(page_title="Dashboard Sentimen Mie Gacoan", page_icon="🍜", layout="wide")
+st.set_page_config(page_title="Dashboard Visualisasi Sentimen", page_icon="🍜", layout="wide")
 
 # ==========================================
-# 2. FUNGSI CACHING DATA (Biar loading cepat)
+# 2. FUNGSI CACHING DATA
 # ==========================================
 @st.cache_data
 def load_data():
-    # Pastikan nama file CSV sesuai dengan file hasil prediksimu
     df = pd.read_csv("gacoan_depok_prediksi.csv") 
     
     # Konversi kolom Tanggal_Ulasan ke format datetime
@@ -28,14 +28,18 @@ df = load_data()
 # ==========================================
 # 3. HEADER & FILTER UTAMA (DROPDOWN CABANG)
 # ==========================================
-st.title("📊 Dashboard Analisis Sentimen Mie Gacoan Depok")
-st.write("Visualisasi interaktif hasil klasifikasi sentimen ulasan pelanggan Mie Gacoan menggunakan model IndoBERT.")
+st.title("Dashboard Visualisasi Sentimen Mie Gacoan Cabang Depok")
+st.write(
+    "Visualisasi interaktif hasil klasifikasi sentimen ulasan pelanggan Mie Gacoan Cabang Depok yang diperoleh dari **Google Maps** dan diklasifikasikan menggunakan model **IndoBERT**."
+    )
 
 st.markdown("---")
 
 # Filter Cabang Utama
 daftar_cabang = ["Semua Cabang"] + list(df['Cabang'].unique())
-pilih_cabang = st.selectbox("🎯 Pilih Cabang Restoran:", daftar_cabang)
+st.subheader("🎯 Filter Cabang Restoran")
+st.caption("Gunakan dropdown di bawah untuk memilih cabang restoran yang ingin dianalisis. Pilih 'Semua Cabang' untuk melihat data secara keseluruhan.")
+pilih_cabang = st.selectbox("Pilih Cabang Restoran:", daftar_cabang)
 
 # Terapkan filter data berdasarkan pilihan cabang
 if pilih_cabang == "Semua Cabang":
@@ -43,59 +47,118 @@ if pilih_cabang == "Semua Cabang":
 else:
     df_filter = df[df['Cabang'] == pilih_cabang]
 
+st.markdown("---")
+
 # ==========================================
-# 4. KARTU ANGKA RINGKASAN (KEY METRICS)
+# 4 & 5. RINGKASAN METRICS & PIE CHART
 # ==========================================
+# Menghitung nilai metrics
 total_ulasan = len(df_filter)
 total_positif = len(df_filter[df_filter['Label_Prediksi'] == 'Positif'])
 total_negatif = len(df_filter[df_filter['Label_Prediksi'] == 'Negatif'])
 
-col_m1, col_m2, col_m3 = st.columns(3)
-col_m1.metric("Total Ulasan Dianalisis", f"{total_ulasan:,}")
-col_m2.metric("Sentimen Positif 😃", f"{total_positif:,}")
-col_m3.metric("Sentimen Negatif 😡", f"{total_negatif:,}")
+col_left, col_right = st.columns([1, 1.2])
 
-st.markdown("---")
+# --- KOLOM KIRI: Rekapitulasi Numerik ---
+with col_left:
+    st.subheader(f"📝 Statistik Distribusi Sentimen ({pilih_cabang})")
+    st.caption("Rincian kuantitatif total ulasan serta perbandingan numerik antara sentimen Positif dan Negatif.")
 
-# ==========================================
-# 5. BARIS 1: PIE CHART & LINE CHART TREN
-# ==========================================
-col_chart1, col_chart2 = st.columns(2)
+    st.markdown("<br>", unsafe_allow_html=True)
 
-with col_chart1:
-    st.subheader(f"Distribusi Sentimen ({pilih_cabang})")
-    st.caption("Diagram lingkaran ini menampilkan perbandingan proporsi persentase antara ulasan bersentimen Positif dan Negatif.")
+    col_total, col_pos, col_neg = st.columns(3)
+    with col_total:
+        st.metric("Total Ulasan Dianalisis", f"{total_ulasan:,}")
+    with col_pos:
+        st.metric("Sentimen Positif 😃", f"{total_positif:,}")
+    with col_neg:
+        st.metric("Sentimen Negatif 😡", f"{total_negatif:,}")
+
+# --- KOLOM KANAN: Pie Chart Visual ---
+with col_right:
+    st.subheader(f"📊 Visualisasi Distribusi Sentimen ({pilih_cabang})")
+    st.caption("Diagram lingkaran ini menampilkan perbandingan proporsi persentase ulasan Positif dan Negatif.")
+    
     fig_pie = px.pie(
         df_filter, 
         names='Label_Prediksi', 
         color='Label_Prediksi', 
         color_discrete_map={'Positif':'#2ca02c', 'Negatif':'#d32f2f'},
-        hole=0.4
+        hole=0.4,
+        height=350
     )
+    
+    fig_pie.update_layout(
+        margin=dict(t=10, b=10, l=10, r=10)
+    )
+    
     st.plotly_chart(fig_pie, use_container_width=True)
-
-with col_chart2:
-    st.subheader(f"Tren Sentimen Berdasarkan Waktu ({pilih_cabang})")
-    st.caption("Grafik garis ini memetakan fluktuasi volume ulasan Positif dan Negatif dari waktu ke waktu berdasarkan tanggal publikasi ulasan.")
-    # Mengelompokkan data berdasarkan Tanggal_Ulasan
-    df_trend = df_filter.groupby([df_filter['Tanggal_Ulasan'].dt.date, 'Label_Prediksi']).size().reset_index(name='Jumlah')
-    fig_line = px.line(
-        df_trend, 
-        x='Tanggal_Ulasan', 
-        y='Jumlah', 
-        color='Label_Prediksi',
-        color_discrete_map={'Positif':'#2ca02c', 'Negatif':'#d32f2f'},
-        markers=True
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
 
 st.markdown("---")
 
 # ==========================================
-# 6. BARIS 2: WORD CLOUD POSITIF & NEGATIF
+# 6. TREN SENTIMEN BERDASARKAN WAKTU (LINE CHART)
 # ==========================================
-st.subheader(f"🔠 Kata Kunci Utama Ulasan ({pilih_cabang})")
-st.caption("Visualisasi Word Cloud di bawah menyoroti kosakata yang paling dominan muncul pada ulasan Positif (kiri) dan Negatif (kanan) untuk memahami topik utama atau faktor kepuasan/keluhan pelanggan.")
+st.subheader(f"📈 Tren Sentimen Berdasarkan Waktu ({pilih_cabang})")
+st.caption("Grafik garis ini memetakan fluktuasi volume ulasan Positif dan Negatif dari bulan ke bulan berdasarkan tanggal publikasi ulasan.")
+
+if not df_filter.empty and 'Tanggal_Ulasan' in df_filter.columns:
+    df_line = df_filter.copy()
+    
+    # 1. Ekstrak Bulan dan Tahun (Format: YYYY-MM) untuk pengelompokan
+    df_line['Bulan_Tahun'] = df_line['Tanggal_Ulasan'].dt.to_period('M')
+
+    # 2. Hitung jumlah tiap label per bulan
+    tren_sentimen = df_line.groupby(['Bulan_Tahun', 'Label_Prediksi']).size().unstack(fill_value=0)
+
+    for col in ['Positif', 'Negatif']:
+        if col not in tren_sentimen.columns:
+            tren_sentimen[col] = 0
+
+    # 3. Ubah indeks kembali ke format Timestamp agar matplotlib bisa membaca urutan waktunya
+    tren_sentimen.index = tren_sentimen.index.to_timestamp()
+
+    # 4. Mulai Menggambar Grafik Matplotlib
+    fig_line, ax = plt.subplots(figsize=(12, 5))
+
+    # Plot Garis Positif (Warna Hijau)
+    ax.plot(
+        tren_sentimen.index, tren_sentimen['Positif'],
+        marker='o', linestyle='-', linewidth=2, color='#2ca02c', label='Positif'
+    )
+
+    # Plot Garis Negatif (Warna Merah)
+    ax.plot(
+        tren_sentimen.index, tren_sentimen['Negatif'],
+        marker='s', linestyle='-', linewidth=2, color='#d32f2f', label='Negatif'
+    )
+
+    # 5. Kustomisasi Tampilan Grafik
+    ax.set_xlabel('Periode Waktu (Bulan)', fontsize=11, labelpad=10)
+    ax.set_ylabel('Jumlah Ulasan', fontsize=11, labelpad=10)
+
+    # Format sumbu X agar rapi (Menampilkan Singkatan Bulan dan Tahun)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+    
+    plt.xticks(rotation=45, ha='right', fontsize=10)
+    plt.yticks(fontsize=10)
+
+    ax.legend(title='Sentimen', title_fontsize='11', fontsize=10, loc='upper left')
+    ax.grid(True, linestyle='--', alpha=0.6)
+
+    plt.tight_layout()
+
+    # Tampilkan grafik Matplotlib di Streamlit
+    st.pyplot(fig_line)
+else:
+    st.info("Data tanggal ulasan tidak tersedia.")
+
+# ==========================================
+# 7. WORD CLOUD POSITIF & NEGATIF
+# ==========================================
+st.subheader(f"🔠 Kata Kunci Utama Sentimen ({pilih_cabang})")
+st.caption("Visualisasi Word Cloud di bawah menyoroti kosakata yang paling dominan muncul pada Sentimen Positif (kiri) dan Sentimen Negatif (kanan) untuk memahami topik utama atau faktor kepuasan/keluhan pelanggan.")
 
 col_wc1, col_wc2 = st.columns(2)
 
@@ -119,7 +182,7 @@ def bersihkan_untuk_wordcloud(teks_panjang):
 
 # --- Wordcloud Positif ---
 with col_wc1:
-    st.markdown("#### Ulasan Positif 😃")
+    st.markdown("#### Sentimen Positif 😃")
     
     # 1. Ambil teks dan gabungkan
     teks_pos_mentah = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Positif']['Teks_Bersih'].dropna().astype(str).tolist())
@@ -143,11 +206,11 @@ with col_wc1:
             ax_pos.axis("off")
             st.pyplot(fig_pos)
     else:
-        st.info("Tidak ada data ulasan positif untuk cabang ini.")
+        st.info("Tidak ada data sentimen positif untuk cabang ini.")
 
 # --- Wordcloud Negatif ---
 with col_wc2:
-    st.markdown("#### Ulasan Negatif 😡")
+    st.markdown("#### Sentimen Negatif 😡")
     
     # 1. Ambil teks dan gabungkan
     teks_neg_mentah = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Negatif']['Teks_Bersih'].dropna().astype(str).tolist())
@@ -171,33 +234,64 @@ with col_wc2:
             ax_neg.axis("off")
             st.pyplot(fig_neg)
     else:
-        st.info("Tidak ada data ulasan negatif untuk cabang ini.")
+        st.info("Tidak ada data sentimen negatif untuk cabang ini.")
 
 st.markdown("---")
 
 # ==========================================
-# 7. BARIS 3: CONTOH HASIL PREDIKSI MODEL (TABEL DATA)
+# 8. CONTOH HASIL PREDIKSI MODEL (TABEL DATA)
 # ==========================================
 st.subheader(f"📄 Contoh Hasil Prediksi Model ({pilih_cabang})")
 st.caption("Tabel berikut menyajikan sampel acak teks ulasan pelanggan beserta label hasil prediksi sentimen yang telah diklasifikasikan secara otomatis oleh model IndoBERT.")
-# Memilih kolom yang relevan untuk ditampilkan
-if 'Teks_Ulasan' in df_filter.columns:
-    kolom_tampil = ['Cabang', 'Tanggal_Ulasan', 'Teks_Ulasan', 'Label_Prediksi']
+
+kolom_tampil = ['Cabang', 'Tanggal_Ulasan', 'Teks_Ulasan', 'Label_Prediksi']
+
+df_tabel = df_filter[kolom_tampil].copy()
+df_tabel['Tanggal_Ulasan'] = pd.to_datetime(df_tabel['Tanggal_Ulasan']).dt.strftime('%Y-%m-%d')
+
+jumlah_sampel = min(100, len(df_tabel))
+df_tabel_acak = df_tabel.sample(n=jumlah_sampel, random_state=42).reset_index(drop=True)
+total_baris = len(df_tabel_acak)
+
+if total_baris > 0:
+    baris_per_halaman = 10
+    total_halaman = (total_baris // baris_per_halaman) + (1 if total_baris % baris_per_halaman > 0 else 0)
+
+    pilihan_rentang = []
+    for i in range(total_halaman):
+        awal = (i * baris_per_halaman) + 1
+        akhir = min((i + 1) * baris_per_halaman, total_baris)
+        pilihan_rentang.append(f"Tampilkan Data ke {awal} - {akhir}")
+
+    rentang_terpilih = st.selectbox("Pilih rentang data:", pilihan_rentang)
+    halaman_saat_ini = pilihan_rentang.index(rentang_terpilih)
+    indeks_awal = halaman_saat_ini * baris_per_halaman
+    indeks_akhir = min(indeks_awal + baris_per_halaman, total_baris)
+    
+    df_tampil = df_tabel_acak.iloc[indeks_awal:indeks_akhir]
+    
+    st.dataframe(
+        df_tampil, 
+        use_container_width=True, 
+        hide_index=True 
+    )
 else:
-    kolom_tampil = ['Cabang', 'Tanggal_Ulasan', 'Teks_Bersih', 'Label_Prediksi']
+    st.info("Tidak ada data sentimen untuk cabang ini.")
 
-# Membuat salinan data khusus untuk tabel agar tidak merusak data grafik
-df_tampil = df_filter[kolom_tampil].copy()
-
-df_tampil['Tanggal_Ulasan'] = df_tampil['Tanggal_Ulasan'].dt.strftime('%Y-%m-%d')
-
-# Mengambil sampel acak (maksimal 100 baris, atau sesuai jumlah data jika kurang dari 100)
-jumlah_sampel = min(100, len(df_tampil))
-df_sampel = df_tampil.sample(n=jumlah_sampel)
-
-# Menampilkan dataframe
-st.dataframe(
-    df_sampel, 
-    use_container_width=True, 
-    hide_index=True
+st.markdown("---")
+# ==========================================
+# 9. FOOTER
+# ==========================================
+st.markdown(
+    """
+    <div style="text-align: center; font-size: 12px; color: gray; line-height: 1.8;">
+        <p style="margin: 0; padding: 0;">
+            🍜 <strong>Dashboard Analisis Sentimen Mie Gacoan Depok</strong><br>
+            Dikembangkan oleh <strong>Zahwa Annisa Hendajani</strong> © 2026<br>
+            <em>Dashboard ini dikembangkan sebagai bagian dari Penulisan Ilmiah dengan judul <br>
+            "Analisis Sentimen Ulasan Pelanggan Mie Gacoan Cabang Depok Berdasarkan Ulasan Google Maps Menggunakan Metode IndoBERT"</em>
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
