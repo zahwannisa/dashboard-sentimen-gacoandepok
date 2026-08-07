@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
+import random
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN UTAMA
@@ -98,6 +99,15 @@ st.caption("Visualisasi Word Cloud di bawah menyoroti kosakata yang paling domin
 
 col_wc1, col_wc2 = st.columns(2)
 
+# --- Fungsi Warna Custom ---
+def warna_positif(word, font_size, position, orientation, random_state=None, **kwargs):
+    # Mengembalikan warna hijau dengan tingkat kegelapan acak (20% - 45%)
+    return f"hsl(120, 100%, {random.randint(20, 45)}%)" 
+
+def warna_negatif(word, font_size, position, orientation, random_state=None, **kwargs):
+    # Mengembalikan warna merah dengan tingkat kegelapan acak (20% - 45%)
+    return f"hsl(0, 100%, {random.randint(20, 45)}%)"
+
 # --- Wordcloud Positif ---
 with col_wc1:
     st.markdown("#### Ulasan Positif 😃")
@@ -110,7 +120,8 @@ with col_wc1:
                 background_color='white', 
                 colormap='Greens', 
                 max_words=100,
-                random_state=42
+                random_state=42,
+                color_func=warna_positif
             ).generate(teks_pos)
             
             fig_pos, ax_pos = plt.subplots(figsize=(6, 3.5))
@@ -132,7 +143,8 @@ with col_wc2:
                 background_color='white', 
                 colormap='Reds', 
                 max_words=100,
-                random_state=42
+                random_state=42,
+                color_func=warna_negatif
             ).generate(teks_neg)
             
             fig_neg, ax_neg = plt.subplots(figsize=(6, 3.5))
