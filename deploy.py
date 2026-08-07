@@ -28,18 +28,17 @@ df = load_data()
 # ==========================================
 # 3. HEADER & FILTER UTAMA (DROPDOWN CABANG)
 # ==========================================
-st.title("Dashboard Visualisasi Sentimen Mie Gacoan Cabang Depok")
+st.title("Dashboard Visualisasi Sentimen Mie Gacoan Wilayah Depok")
 st.write(
-    "Visualisasi interaktif hasil klasifikasi sentimen ulasan pelanggan Mie Gacoan Cabang Depok yang diperoleh dari **Google Maps** dan diklasifikasikan menggunakan model **IndoBERT**."
-    )
+    "Visualisasi interaktif hasil klasifikasi sentimen ulasan pelanggan Mie Gacoan wilayah Depok yang diperoleh dari **Google Maps** dan diklasifikasikan menggunakan model **IndoBERT**.")
 
 st.markdown("---")
 
 # Filter Cabang Utama
 daftar_cabang = ["Semua Cabang"] + list(df['Cabang'].unique())
-st.subheader("🎯 Filter Cabang Restoran")
-st.caption("Gunakan dropdown di bawah untuk memilih cabang restoran yang ingin dianalisis. Pilih 'Semua Cabang' untuk melihat data secara keseluruhan.")
-pilih_cabang = st.selectbox("Pilih Cabang Restoran:", daftar_cabang)
+st.subheader("🎯 Filter Cabang Mie Gacoan")
+st.caption("Gunakan dropdown di bawah untuk memilih cabang Mie Gacoan yang ingin ditampilkan. Pilih 'Semua Cabang' untuk melihat data secara keseluruhan.")
+pilih_cabang = st.selectbox("Pilih Cabang Mie Gacoan:", daftar_cabang)
 
 # Terapkan filter data berdasarkan pilihan cabang
 if pilih_cabang == "Semua Cabang":
@@ -62,7 +61,7 @@ col_left, col_right = st.columns([1, 1.2])
 # --- KOLOM KIRI: Rekapitulasi Numerik ---
 with col_left:
     st.subheader(f"📝 Statistik Distribusi Sentimen ({pilih_cabang})")
-    st.caption("Rincian kuantitatif total ulasan serta perbandingan numerik antara sentimen Positif dan Negatif.")
+    st.caption("Rincian kuantitatif total ulasan serta perbandingan numerik antara Sentimen Positif dan Sentimen Negatif.")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -77,7 +76,7 @@ with col_left:
 # --- KOLOM KANAN: Pie Chart Visual ---
 with col_right:
     st.subheader(f"📊 Visualisasi Distribusi Sentimen ({pilih_cabang})")
-    st.caption("Diagram lingkaran ini menampilkan perbandingan proporsi persentase ulasan Positif dan Negatif.")
+    st.caption("Pie Chart di bawah ini menampilkan perbandingan proporsi persentase Sentimen Positif dan Sentimen Negatif.")
     
     fig_pie = px.pie(
         df_filter, 
@@ -91,6 +90,10 @@ with col_right:
     fig_pie.update_layout(
         margin=dict(t=10, b=10, l=10, r=10)
     )
+
+    fig_pie.update_traces(
+            rotation=90, 
+        )
     
     st.plotly_chart(fig_pie, use_container_width=True)
 
@@ -100,7 +103,7 @@ st.markdown("---")
 # 6. TREN SENTIMEN BERDASARKAN WAKTU (LINE CHART)
 # ==========================================
 st.subheader(f"📈 Tren Sentimen Berdasarkan Waktu ({pilih_cabang})")
-st.caption("Grafik garis ini memetakan fluktuasi volume ulasan Positif dan Negatif dari bulan ke bulan berdasarkan tanggal publikasi ulasan.")
+st.caption("Line Chart di bawah ini menyajikan analisis rentang waktu (time-series) yang merekam dinamika sentimen dari bulan ke bulan guna melihat konsistensi kepuasan pelanggan.")
 
 if not df_filter.empty and 'Tanggal_Ulasan' in df_filter.columns:
     df_line = df_filter.copy()
@@ -158,7 +161,7 @@ else:
 # 7. WORD CLOUD POSITIF & NEGATIF
 # ==========================================
 st.subheader(f"🔠 Kata Kunci Utama Sentimen ({pilih_cabang})")
-st.caption("Visualisasi Word Cloud di bawah menyoroti kosakata yang paling dominan muncul pada Sentimen Positif (kiri) dan Sentimen Negatif (kanan) untuk memahami topik utama atau faktor kepuasan/keluhan pelanggan.")
+st.caption("Visualisasi Word Cloud di bawah ini menyoroti kosakata yang paling dominan muncul pada Sentimen Positif (kiri) dan Sentimen Negatif (kanan) untuk memahami topik utama atau faktor kepuasan/keluhan pelanggan.")
 
 col_wc1, col_wc2 = st.columns(2)
 
@@ -242,7 +245,7 @@ st.markdown("---")
 # 8. CONTOH HASIL PREDIKSI MODEL (TABEL DATA)
 # ==========================================
 st.subheader(f"📄 Contoh Hasil Prediksi Model ({pilih_cabang})")
-st.caption("Tabel berikut menyajikan sampel acak teks ulasan pelanggan beserta label hasil prediksi sentimen yang telah diklasifikasikan secara otomatis oleh model IndoBERT.")
+st.caption("Tabel di bawah ini menyajikan sampel acak teks ulasan pelanggan beserta label hasil prediksi sentimen yang telah diklasifikasikan secara otomatis oleh model IndoBERT.")
 
 kolom_tampil = ['Cabang', 'Tanggal_Ulasan', 'Teks_Ulasan', 'Label_Prediksi']
 
@@ -289,7 +292,7 @@ st.markdown(
             🍜 <strong>Dashboard Analisis Sentimen Mie Gacoan Depok</strong><br>
             Dikembangkan oleh <strong>Zahwa Annisa Hendajani</strong> © 2026<br>
             <em>Dashboard ini dikembangkan sebagai bagian dari Penulisan Ilmiah dengan judul <br>
-            "Analisis Sentimen Ulasan Pelanggan Mie Gacoan Cabang Depok Berdasarkan Ulasan Google Maps Menggunakan Metode IndoBERT"</em>
+            "Analisis Sentimen Ulasan Pelanggan Mie Gacoan Wilayah Depok Berdasarkan Ulasan Google Maps Menggunakan Metode IndoBERT"</em>
         </p>
     </div>
     """,
