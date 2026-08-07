@@ -101,12 +101,10 @@ col_wc1, col_wc2 = st.columns(2)
 
 # --- Fungsi Warna Custom ---
 def warna_positif(word, font_size, position, orientation, random_state=None, **kwargs):
-    # Mengembalikan warna hijau dengan tingkat kegelapan acak (20% - 45%)
-    return f"hsl(120, 100%, {random.randint(20, 45)}%)" 
+    return f"hsl(120, 100%, {random.randint(15, 45)}%)" 
 
 def warna_negatif(word, font_size, position, orientation, random_state=None, **kwargs):
-    # Mengembalikan warna merah dengan tingkat kegelapan acak (20% - 45%)
-    return f"hsl(0, 100%, {random.randint(20, 45)}%)"
+    return f"hsl(0, 100%, {random.randint(15, 45)}%)"
 
 # --- Wordcloud Positif ---
 with col_wc1:
