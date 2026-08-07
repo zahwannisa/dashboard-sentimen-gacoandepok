@@ -101,15 +101,31 @@ col_wc1, col_wc2 = st.columns(2)
 
 # --- Fungsi Warna Custom ---
 def warna_positif(word, font_size, position, orientation, random_state=None, **kwargs):
-    return f"hsl(120, 100%, {random.randint(15, 45)}%)" 
+    kegelapan = random_state.randint(15, 45) if random_state else 30
+    return f"hsl(120, 100%, {kegelapan}%)"
 
 def warna_negatif(word, font_size, position, orientation, random_state=None, **kwargs):
-    return f"hsl(0, 100%, {random.randint(15, 45)}%)"
+    kegelapan = random_state.randint(15, 45) if random_state else 30
+    return f"hsl(0, 100%, {kegelapan}%)"
+
+# --- Fungsi Membersihkan Stopwords (Khusus WordCloud) ---
+stopwords_tambahan = {'dan', 'yang', 'di', 'ke', 'dari', 'untuk', 'dengan', 'ini', 'itu', 'nya', 'ada', 'yg'}
+
+def bersihkan_untuk_wordcloud(teks_panjang):
+    words = str(teks_panjang).split()
+    # Hanya simpan kata yang tidak ada di dalam stopwords_tambahan
+    words = [w for w in words if w.lower() not in stopwords_tambahan]
+    return " ".join(words)
 
 # --- Wordcloud Positif ---
 with col_wc1:
     st.markdown("#### Ulasan Positif 😃")
-    teks_pos = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Positif']['Teks_Bersih'].dropna().astype(str).tolist())
+    
+    # 1. Ambil teks dan gabungkan
+    teks_pos_mentah = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Positif']['Teks_Bersih'].dropna().astype(str).tolist())
+    
+    # 2. Bersihkan kata hubungnya
+    teks_pos = bersihkan_untuk_wordcloud(teks_pos_mentah)
     
     if teks_pos.strip():
         with st.spinner("Merender Word Cloud Positif..."):
@@ -118,7 +134,7 @@ with col_wc1:
                 background_color='white', 
                 colormap='Greens', 
                 max_words=100,
-                random_state=42,
+                random_state=32,
                 color_func=warna_positif
             ).generate(teks_pos)
             
@@ -132,7 +148,12 @@ with col_wc1:
 # --- Wordcloud Negatif ---
 with col_wc2:
     st.markdown("#### Ulasan Negatif 😡")
-    teks_neg = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Negatif']['Teks_Bersih'].dropna().astype(str).tolist())
+    
+    # 1. Ambil teks dan gabungkan
+    teks_neg_mentah = " ".join(df_filter[df_filter['Label_Prediksi'] == 'Negatif']['Teks_Bersih'].dropna().astype(str).tolist())
+    
+    # 2. Bersihkan kata hubungnya
+    teks_neg = bersihkan_untuk_wordcloud(teks_neg_mentah)
     
     if teks_neg.strip():
         with st.spinner("Merender Word Cloud Negatif..."):
@@ -141,7 +162,7 @@ with col_wc2:
                 background_color='white', 
                 colormap='Reds', 
                 max_words=100,
-                random_state=42,
+                random_state=32,
                 color_func=warna_negatif
             ).generate(teks_neg)
             
@@ -151,8 +172,6 @@ with col_wc2:
             st.pyplot(fig_neg)
     else:
         st.info("Tidak ada data ulasan negatif untuk cabang ini.")
-
-st.markdown("---")
 
 st.markdown("---")
 
